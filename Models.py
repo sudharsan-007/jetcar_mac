@@ -1,4 +1,7 @@
 import torch.nn as nn
+import torchvision
+
+output_dim = 2 # Change to 1 if only predicting steering
 
 class NetworkNvidia(nn.Module):
     """NVIDIA model used in the paper."""
@@ -35,19 +38,45 @@ class NetworkNvidia(nn.Module):
             nn.Dropout(0.5)
         )
         self.linear_layers = nn.Sequential(
-            nn.Linear(in_features=48576, out_features=100),
+            nn.Linear(in_features=28224, out_features=100),
+            # nn.Linear(in_features=48576, out_features=100),
             nn.ELU(),
             nn.Linear(in_features=100, out_features=50),
             nn.ELU(),
             nn.Linear(in_features=50, out_features=10),
-            nn.Linear(in_features=10, out_features=2) 
+            nn.ELU(),
+            nn.Linear(in_features=10, out_features=output_dim) 
         )
 
     def forward(self, input):
         """Forward pass."""
         input = input.view(input.size(0), 3, 224, 224)
         output = self.conv_layers(input)
-        print(output.shape)
+        # print(output.shape)
         output = output.view(output.size(0), -1)
         output = self.linear_layers(output)
         return output
+
+
+def ResNet18():
+    model = torchvision.models.resnet18(pretrained=True)
+    model.fc = nn.Linear(512, output_dim)
+    return model 
+
+def ResNet34():
+    # RESNET 34
+    model = torchvision.models.resnet34(pretrained=True)
+    model.fc = nn.Linear(512, output_dim)
+    return model
+
+def AlexNet():
+    # ALEXNET
+    model = torchvision.models.alexnet(pretrained=True)
+    model.classifier[-1] = nn.Linear(4096, output_dim)
+    return model
+
+def VGG16():
+    model = torchvision.models.vgg16(pretrained=True)
+    model.classifier[-1] = nn.Linear(4096, output_dim)
+    return model
+    
